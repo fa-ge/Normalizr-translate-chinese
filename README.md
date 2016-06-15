@@ -1,5 +1,6 @@
 # Normalizr-translate-chinese
 [官方英文文档](https://github.com/paularmstrong/normalizr)
+
 翻译的不太好，可以对比着看看
 # normalizr [![build status](https://img.shields.io/travis/paularmstrong/normalizr/master.svg?style=flat-square)](https://travis-ci.org/paularmstrong/normalizr) [![npm version](https://img.shields.io/npm/v/normalizr.svg?style=flat-square)](https://www.npmjs.com/package/normalizr) [![npm downloads](https://img.shields.io/npm/dm/normalizr.svg?style=flat-square)](https://www.npmjs.com/package/normalizr)
 
