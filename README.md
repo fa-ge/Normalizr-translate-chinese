@@ -23,11 +23,11 @@ See **[flux-react-router-example](https://github.com/gaearon/flux-react-router-e
 See **[redux/examples/real-world](https://github.com/rackt/redux/tree/master/examples/real-world)**.
 
 ## 问题
-* 你有一个返回深层嵌套对象的JSON api
+* 你有一个返回了深层嵌套对象的JSON api
 * 你想要你的应用针对[Flux](https://github.com/facebook/flux) 或者 [Redux](http://rackt.github.io/redux);
-* 你发现Store(或者Reducers)从深层嵌套的对象中获取整合数据时非常麻烦
+* 你发现Store(或者Reducers)使用深层嵌套的API相应对象非常麻烦
  
-Normalizr 需要JSON数据和一种模式来用id替换嵌套的实体，并且整合所有的实体到对象中
+Normalizr采用JSON格式和一种模式，并且嵌套实体的id来替换嵌套实体，并且整合所有的实体到字典对象中
 
 For example,
 
@@ -77,14 +77,14 @@ can be normalized to
 }
 ```
 
+
 注意它的扁平化结构(所有的嵌套都没了)
 
 ## 特性
 * 实体可以嵌套在其他实体、对象、数组中
-* 可以通过连接两个实体来表示任何类型的API返回的数据
-* 实体的id如果相同会合并 (with a warning if they differ);
+* 可以通过连接两个实体来表示任何类型的API返回的数据--------------------------------
+* 相同id的实体会自动合并 (with a warning if they differ);
 * 允许使用自定义的id属性作为合并的依据 (e.g. slug).
-
 
 ## 用法
 
@@ -92,7 +92,7 @@ can be normalized to
 import { normalize, Schema, arrayOf } from 'normalizr';
 ```
 
-首先，为实体定义模式(Schema)
+首先，为实体定义一个模式(schema)
 
 ```javascript
 const article = new Schema('articles');
@@ -108,7 +108,8 @@ article.define({
 });
 ```
 
-现在我们可以用这个schema来处理我们API返回的数据:
+现在我们可以在API响应处理方法中使用这个schema:
+
 ```javascript
 const ServerActionCreators = {
 
@@ -255,14 +256,17 @@ const article = new Schema('articles', { idAttribute: 'slug', meta: { removeProp
 // You can specify custom `assignEntity` function to be run after the `assignEntity` function passed to `normalize`
 const article = new Schema('articles', { assignEntity: function (output, key, value, input) {
   if (key === 'id_str') {
-    obj.id = value;
-    if ('id_str' in obj) {
-      delete obj.id_str;
+    output.id = value;
+    if ('id_str' in output) {
+      delete output.id_str;
     }
   } else {
-    obj[key] = value;
+    output[key] = value;
   }
 }})
+
+// You can specify default values for the entity
+const article = new Schema('articles', { defaults: { likes: 0 } });
 ```
 
 ### `Schema.prototype.define(nestedSchema)`
@@ -301,6 +305,17 @@ article.getIdAttribute();
 // id
 slugArticle.getIdAttribute();
 // slug
+```
+
+### `Schema.prototype.getDefaults()`
+
+Returns the default values of the schema.
+
+```javascript
+const article = new Schema('articles', { defaults: { likes: 0 } });
+
+article.getDefaults();
+// { likes: 0 }
 ```
 
 ### `arrayOf(schema, [options])`
@@ -586,5 +601,4 @@ npm run test:watch # run test watcher
 
 Normalizr was originally created by [Dan Abramov](http://github.com/gaearon) and inspired by a conversation with [Jing Chen](https://twitter.com/jingc).  
 It has since received contributions from different [community members](https://github.com/gaearon/normalizr/graphs/contributors).
-
 
