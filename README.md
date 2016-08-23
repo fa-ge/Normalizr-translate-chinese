@@ -23,11 +23,11 @@ See **[flux-react-router-example](https://github.com/gaearon/flux-react-router-e
 See **[redux/examples/real-world](https://github.com/rackt/redux/tree/master/examples/real-world)**.
 
 ## 问题
-* 你有一个返回了深层嵌套对象的JSON api
+* 你有一个返回了深层嵌套的对象的API请求
 * 你想要你的应用针对[Flux](https://github.com/facebook/flux) 或者 [Redux](http://rackt.github.io/redux);
-* 你发现Store(或者Reducers)使用深层嵌套的API相应对象非常麻烦
+* 你发现Store(或者Reducers)从深层嵌套的数据中获取和操作数据会非常麻烦
  
-Normalizr采用JSON格式和一种模式，并且嵌套实体的id来替换嵌套实体，并且整合所有的实体到字典对象中
+Normalizr采用JSON格式和一种schema，并且用嵌套实体的id来替换嵌套实体，整合所有的实体到字典对象中
 
 For example,
 
@@ -49,7 +49,7 @@ For example,
 }]
 ```
 
-can be normalized to
+可以被范式化成(normalized to)
 
 ```javascript
 {
@@ -82,7 +82,7 @@ can be normalized to
 
 ## 特性
 * 实体可以嵌套在其他实体、对象、数组中
-* 可以通过连接两个实体来表示任何类型的API返回的数据--------------------------------
+* 可以通过结合实体的schema来表示任何类型API返回的数据
 * 相同id的实体会自动合并 (with a warning if they differ);
 * 允许使用自定义的id属性作为合并的依据 (e.g. slug).
 
@@ -108,19 +108,18 @@ article.define({
 });
 ```
 
-现在我们可以在API响应处理方法中使用这个schema:
+现在我们可以在处理API请求返回数据的方法中使用这个schema:
 
 ```javascript
 const ServerActionCreators = {
 
-  // These are two different XHR endpoints with different response schemas.
-  // We can use the schema objects defined earlier to express both of them:
+  // 有两个带有不同响应对象的schemas的XHR endpoints----------------------------
+  // 我们可以用前面定义的schema对象来表示他们:
 
   receiveOneArticle(response) {
 
-    // Here, the response is an object containing data about one article.
-    // Passing the article schema as second parameter to normalize() lets it
-    // correctly traverse the response tree and gather all entities:
+    // 在这里，这个返回的数据是一个包含了一篇文章的对象
+    // 把文章的schema作为normalize方法的第二个参数，让他能正确的遍历响应对象并且把所有的实体都整合到一起
 
     // BEFORE:
     // {
@@ -141,12 +140,12 @@ const ServerActionCreators = {
     //
     // AFTER:
     // {
-    //   result: 1,                    // <--- Note object is referenced by ID
+    //   result: 1,                    // <--- 注意对象是由ID来引用的
     //   entities: {
     //     articles: {
     //       1: {
-    //         author: 7,              // <--- Same happens for references to
-    //         contributors: [10, 15]  // <--- other entities in the schema
+    //         author: 7,              // <--- 同样适用于在其它实体中的引用
+    //         contributors: [10, 15]  
     //         ...}
     //     },
     //     users: {
@@ -167,10 +166,8 @@ const ServerActionCreators = {
 
   receiveAllArticles(response) {
 
-    // Here, the response is an object with the key 'articles' referencing
-    // an array of article objects. Passing { articles: arrayOf(article) } as
-    // second parameter to normalize() lets it correctly traverse the response
-    // tree and gather all entities:
+    // 这里，返回的数据是一个对象，他的key为'articles'并且该key指向了一个包含文章对象的数组
+    // 把 { articles: arrayOf(article) }作为normalize方法的第二个参数，让他能正确的遍历响应对象并且把所有的实体都整合到一起
 
     // BEFORE:
     // {
@@ -190,11 +187,11 @@ const ServerActionCreators = {
     // AFTER:
     // {
     //   result: {
-    //    articles: [1, 2, ...]     // <--- Note how object array turned into ID array
+    //    articles: [1, 2, ...]     // <--- 注意对象数组转换成ID数组的方式
     //   },
     //   entities: {
     //     articles: {
-    //       1: { author: 7, ... }, // <--- Same happens for references to other entities in the schema
+    //       1: { author: 7, ... }, // <--- 同样适用于在其它实体中的引用
     //       2: { ... },
     //       ...
     //     },
@@ -235,22 +232,22 @@ AppDispatcher.register((payload) => {
 
 ### `new Schema(key, [options])`
 
-Schema lets you define a type of entity returned by your API.  
-This should correspond to model in your server code.  
+Schema 允许你定义一个通过API返回的实体的类型
+这应该与你服务器上代码的模型相对应
 
-The `key` parameter lets you specify the name of the dictionary for this kind of entity.  
+`key`参数允许你为这类实体指定一个名字(译者的理解其实就是数据库表名)
 
 ```javascript
 const article = new Schema('articles');
 
-// You can use a custom id attribute
+// 你可以使用自定义的id属性
 const article = new Schema('articles', { idAttribute: 'slug' });
 
-// Or you can specify a function to infer it
+// 或者指定一个函数来生成
 function generateSlug(entity) { /* ... */ }
 const article = new Schema('articles', { idAttribute: generateSlug });
 
-// You can also specify meta properties to be used for customizing the output in assignEntity (see below)
+// You can also specify meta properties to be used for customizing the output in assignEntity (见下)
 const article = new Schema('articles', { idAttribute: 'slug', meta: { removeProps: ['publisher'] }});
 
 // You can specify custom `assignEntity` function to be run after the `assignEntity` function passed to `normalize`
@@ -265,13 +262,13 @@ const article = new Schema('articles', { assignEntity: function (output, key, va
   }
 }})
 
-// You can specify default values for the entity
+// 你可以为实体指定默认的值
 const article = new Schema('articles', { defaults: { likes: 0 } });
 ```
 
 ### `Schema.prototype.define(nestedSchema)`
 
-Lets you specify relationships between different entities.  
+允许你指定不同实体之间的关系
 
 ```javascript
 const article = new Schema('articles');
@@ -284,7 +281,7 @@ article.define({
 
 ### `Schema.prototype.getKey()`
 
-Returns the key of the schema.
+返回这个schema的key
 
 ```javascript
 const article = new Schema('articles');
@@ -295,7 +292,7 @@ article.getKey();
 
 ### `Schema.prototype.getIdAttribute()`
 
-Returns the idAttribute of the schema.
+返回这个schema的id属性
 
 ```javascript
 const article = new Schema('articles');
@@ -309,7 +306,7 @@ slugArticle.getIdAttribute();
 
 ### `Schema.prototype.getDefaults()`
 
-Returns the default values of the schema.
+返回这个schema的默认值
 
 ```javascript
 const article = new Schema('articles', { defaults: { likes: 0 } });
@@ -320,7 +317,7 @@ article.getDefaults();
 
 ### `arrayOf(schema, [options])`
 
-Describes an array of the schema passed as argument.
+描述了一个schema的数组作为参数被传递
 
 ```javascript
 const article = new Schema('articles');
@@ -333,6 +330,7 @@ article.define({
 ```
 
 If the array contains entities with different schemas, you can use the `schemaAttribute` option to specify which schema to use for each entity:
+如果一个数组包含了具有不同schema的实体，你可以使用`schemaAttribute`选项来为每一个实体指定schema
 
 ```javascript
 const article = new Schema('articles');
@@ -479,9 +477,9 @@ const normalized = normalize(wrappedArr, {
 });
 ```
 
-## Explanation by Example
+## 通过例子来解释
 
-Say, you have `/articles` API with the following schema:
+假如你有返回以下schema的API请求`/articles`:
 
 ```
 articles: article*
@@ -498,12 +496,11 @@ collection: {
 }
 ```
 
-Without normalizr, your Stores would need to know too much about API response schema.  
-For example, `UserStore` would include a lot of boilerplate to extract fresh user info when articles are fetched:
+如果不做范式化，你的store需要清楚的知道返回数据的结构
+比如， `UserStore`在获取到请求结果的时候会包含很多样板代码来获取新用户
 
 ```javascript
-// Without normalizr, you'd have to do this in every store:
-
+// 如果不做范式化, 你需要对每一个store都做这些
 AppDispatcher.register((payload) => {
   const { action } = payload;
 
@@ -529,7 +526,7 @@ AppDispatcher.register((payload) => {
 });
 ```
 
-Normalizr solves the problem by converting API responses to a flat form where nested entities are replaced with IDs:
+Normalizr解决了这个问题，通过把嵌套的实体用id替代把请求返回的数据变成了一个扁平化的结构的对象
 
 ```javascript
 {
@@ -562,10 +559,10 @@ Normalizr solves the problem by converting API responses to a flat form where ne
 }
 ```
 
-Then `UserStore` code can be rewritten as:
+`UserStore`的代码可以像这样被重写
 
 ```javascript
-// With normalizr, users are always in action.response.entities.users
+// 做了范式化后，所有的用户都在action.response.entities.users中
 
 AppDispatcher.register((payload) => {
   const { action } = payload;
@@ -578,9 +575,9 @@ AppDispatcher.register((payload) => {
 });
 ```
 
-## Dependencies
+## 依赖
 
-* Some methods from `lodash`, such as `isObject`, `isEqual` and `mapValues`
+* 一些方法依赖 `lodash`, 比如 `isObject`, `isEqual` 和 `mapValues`
 
 ## Browser Support
 
